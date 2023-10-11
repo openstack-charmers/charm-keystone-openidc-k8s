@@ -1,0 +1,14 @@
+name: keystone-openidc-k8s
+display-name: Keystone OpenIDC integration
+summary: Keystone Domain backend for OpenIDC or Active Directory
+description: |
+  Keystone support the use of domain specific identity drivers,
+  allowing different types of authentication backend to be deployed in a single Keystone
+  deployment. This charm supports use of OpenIDC or Active Directory domain backends,
+  with configuration details provided by charm configuration options.
+peers:
+  peers:
+    interface: keystone-dc-peer
+provides:
+  domain-config:
+    interface: keystone-domain-config
