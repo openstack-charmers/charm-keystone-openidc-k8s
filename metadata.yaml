@@ -8,7 +8,7 @@ description: |
   with configuration details provided by charm configuration options.
 peers:
   peers:
-    interface: keystone-dc-peer
+    interface: keystone-openidc-peer
 provides:
-  domain-config:
-    interface: keystone-domain-config
+  openidc-config:
+    interface: openidc-config

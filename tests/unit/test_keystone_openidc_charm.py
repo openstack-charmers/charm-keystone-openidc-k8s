@@ -17,7 +17,6 @@
 """Define keystone tests."""
 
 import base64
-import json
 
 import ops_sunbeam.test_utils as test_utils
 from ops.testing import Harness
@@ -54,29 +53,29 @@ class TestKeystoneOpenIDCK8SCharm(test_utils.CharmTestCase):
     def test_charm(self):
         """Test pebble ready handler."""
         self.harness.set_leader()
-        rel_id = self.harness.add_relation("domain-config", "keystone")
+        peer_rel_id = self.harness.add_relation("peers", "keystone-openidc-k8s")
+        rel_id = self.harness.add_relation("openidc-config", "keystone")
         self.harness.add_relation_unit(rel_id, "keystone/0")
         rel_data = self.harness.get_relation_data(rel_id, self.harness.charm.unit.app.name)
-        openidc_config_flags = json.dumps(
-            {
-                "group_tree_dn": "ou=groups,dc=test,dc=com",
-                "group_objectclass": "posixGroup",
-                "group_name_attribute": "cn",
-                "group_member_attribute": "memberUid",
-                "group_members_are_ids": "true",
-                "url": "openidc://10.1.176.184",
-                "user": "cn=admin,dc=test,dc=com",
-                "password": "crapper",
-                "suffix": "dc=test,dc=com",
-            }
-        )
         self.harness.update_config(
             {
-                "domain-name": "userdomain",
-                "openidc-config-flags": openidc_config_flags,
+                "oidc-provider-metadata-url": "http://openidc.example.org",
+                "oidc-client-id": "client1",
+                "oidc-client-secret": "asecret",
             }
         )
-        self.assertEqual("userdomain", rel_data["domain-name"])
-        contents = base64.b64decode(rel_data["config-contents"]).decode()
-        self.assertIn("password = crapper", contents)
-        self.assertIn("group_objectclass = posixGroup", contents)
+        self.harness.update_relation_data(
+            rel_id, "keystone", {"keystone_ip": "10.0.0.10", "keystone_port": "5000"}
+        )
+        secret = self.harness.add_model_secret(
+            "keystone-openidc-k8s", {"crypto-passphrase": "a-passphrase"}
+        )
+        self.harness.update_relation_data(
+            peer_rel_id, "keystone-openidc-k8s", {"oidc-crypto-passphrase": secret}
+        )
+        openidc_apache_config_file = base64.b64decode(rel_data["config-contents"]).decode()
+        self.assertIn(
+            "OIDCProviderMetadataURL http://openidc.example.org", openidc_apache_config_file
+        )
+        self.assertIn("OIDCClientID client1", openidc_apache_config_file)
+        self.assertIn("OIDCClientSecret asecret", openidc_apache_config_file)

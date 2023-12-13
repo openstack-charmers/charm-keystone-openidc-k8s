@@ -114,3 +114,10 @@ options:
     description: |
       A user-facing name to be used for the identity provider and protocol
       combination. Used in the OpenStack dashboard.
+  tls-ca:
+    type: string
+    default: null
+    description: |
+      This option controls which certificate (or a chain) will be used to connect
+      to an openidc server(s) over TLS. Certificate contents should be either used
+      directly or included via include-file://

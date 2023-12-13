@@ -24,7 +24,7 @@ applications:
 
   keystone:
     charm: ch:keystone-k8s
-    channel: 2023.1/edge/gnuoy
+    channel: 2023.2/edge/gnuoy
     series: jammy
     scale: 1
     trust: true
@@ -43,11 +43,16 @@ applications:
     channel: edge
     scale: 1
 
+  tls-operator:
+    charm: self-signed-certificates
+    channel: edge
+    scale: 1
+    options:
+      ca-common-name: internal-ca
+
 relations:
 - - traefik:ingress
   - keystone:ingress-public
-- - traefik:ingress
-  - glance:ingress-public
 
 - - rabbitmq:amqp
   - keystone:amqp
@@ -55,5 +60,8 @@ relations:
 - - mysql:database
   - keystone:database
 
-- - mysql:database
-  - glance:database
+- - openidc-server:certificates
+  - tls-operator:certificates
+
+- - keystone-openidc:openidc-config
+  - keystone:openidc-config
